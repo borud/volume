@@ -39,14 +39,18 @@ func main() {
 	// quick and dirty webserver
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		var nums []int
-		db.Select(&nums, "SELECT num FROM data LIMIT 100")
+		err := db.Select(&nums, "SELECT num FROM data LIMIT 100")
+		if err != nil {
+			http.Error(w, fmt.Sprintf("db error: %v", err), http.StatusInternalServerError)
+			return
+		}
 
-		err := json.NewEncoder(w).Encode(nums)
+		err = json.NewEncoder(w).Encode(nums)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("error marshalling JSON: %v", err), http.StatusInternalServerError)
+			return
 		}
 	})
-
 	log.Printf("listening on [%s]", httpListenAddr)
 	log.Printf("%v", http.ListenAndServe(httpListenAddr, nil))
 }
